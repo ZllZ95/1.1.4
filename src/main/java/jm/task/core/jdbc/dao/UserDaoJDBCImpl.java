@@ -2,6 +2,7 @@ package jm.task.core.jdbc.dao;
 
 import jm.task.core.jdbc.model.User;
 import jm.task.core.jdbc.util.Util;
+import org.hibernate.Session;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -65,24 +66,13 @@ public class UserDaoJDBCImpl implements UserDao {
 
     public List<User> getAllUsers() {
 
-        List<User> users = new ArrayList<>();
-        String sql = "SELECT * FROM users";
-        try (Connection conn = Util.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            while (rs.next()) {
-                User user = new User();
-                user.setId(rs.getLong("id"));
-                user.setName(rs.getString("name"));
-                user.setLastName(rs.getString("lastName"));
-                user.setAge(rs.getByte("age"));
-                users.add(user);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        try (Session session = Util.HibernateUtil.getSessionFactory().openSession()) {
+            List<User> users = session.createQuery("from User", User.class).list();
+            System.out.println("Found users: " + users.size());
+            return users;
         }
-        return users;
     }
+
     public void cleanUsersTable() {
         String sql = "TRUNCATE TABLE users";
         try (Connection conn = Util.getConnection();
